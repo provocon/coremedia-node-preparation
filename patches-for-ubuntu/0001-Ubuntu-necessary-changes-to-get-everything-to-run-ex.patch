@@ -1,0 +1,238 @@
+From fe91b95cd2574821fef2e3d58c4b9f7ce81c67dd Mon Sep 17 00:00:00 2001
+From: Martin Goellnitz <martin@goellnitz.de>
+Date: Fri, 24 Nov 2017 14:38:03 +0100
+Subject: [PATCH 1/2] Ubuntu: necessary changes to get everything to run except
+ the studio service
+
+---
+ .../cookbooks/blueprint-mongodb/recipes/default.rb | 14 ++++++-
+ .../cookbooks/blueprint-mysql/recipes/schemas.rb   |  4 +-
+ .../cookbooks/blueprint-solr/recipes/default.rb    |  3 +-
+ .../cookbooks/blueprint-yum/recipes/default.rb     | 10 +++--
+ .../coremedia-proxy/recipes/ssl.rb                 | 11 +++--
+ .../coremedia_tomcat/definitions/lifecycle.rb      |  8 ++++
+ .../templates/default/service.init.erb             | 10 +++++
+ deployment/chef/nodes/cms-9-ubuntu.json            | 49 ++++++++++++++++++++++
+ .../mongodb3/recipes/package_repo.rb               |  8 +++-
+ 9 files changed, 105 insertions(+), 12 deletions(-)
+ create mode 100644 deployment/chef/nodes/cms-9-ubuntu.json
+
+diff --git a/deployment/chef/cookbooks/blueprint-mongodb/recipes/default.rb b/deployment/chef/cookbooks/blueprint-mongodb/recipes/default.rb
+index 8757de9..51f59fd 100644
+--- a/deployment/chef/cookbooks/blueprint-mongodb/recipes/default.rb
++++ b/deployment/chef/cookbooks/blueprint-mongodb/recipes/default.rb
+@@ -13,6 +13,9 @@ end
+ require 'chef/rewind'
+ 
+ include_recipe 'ulimit::default'
++if platform?("debian", "ubuntu")
++  include_recipe 'apt::default'
++end
+ include_recipe 'blueprint-mongodb::disable-thp'
+ include_recipe 'mongodb3'
+ 
+@@ -48,5 +51,14 @@ service 'mongod' do
+   end
+   supports start: true, stop: true, restart: true, status: true
+   action :enable
+-  subscribes :restart, "template[cm_#{node['mongodb3']['mongod']['config_file']}]", :immediately
++end
++
++if platform?("debian", "ubuntu")
++  execute 'reload_systemd' do
++    command 'systemctl daemon-reload'
++  end
++end
++
++service "mongod" do
++  action :start
+ end
+diff --git a/deployment/chef/cookbooks/blueprint-mysql/recipes/schemas.rb b/deployment/chef/cookbooks/blueprint-mysql/recipes/schemas.rb
+index 5f1d181..371e11a 100644
+--- a/deployment/chef/cookbooks/blueprint-mysql/recipes/schemas.rb
++++ b/deployment/chef/cookbooks/blueprint-mysql/recipes/schemas.rb
+@@ -18,8 +18,8 @@ node['blueprint']['mysql']['schemas'].each do |schema|
+          GRANT ALL PRIVILEGES ON #{schema}.* TO '#{schema}'@'#{node['fqdn']}' IDENTIFIED BY '#{schema}'; \
+          GRANT ALL PRIVILEGES ON #{schema}.* TO '#{schema}'@'%' IDENTIFIED BY '#{schema}';"
+   execute "create #{schema} schema" do
+-    command "mysql --user=root --password=coremedia --execute=\"#{sql}\""
+-    not_if "mysql --user=#{schema} --password=#{schema} --execute='' #{schema}"
++    command "mysql -S #{node['blueprint']['mysql']['socket']} --user=root --password=coremedia --execute=\"#{sql}\""
++    not_if "mysql -S #{node['blueprint']['mysql']['socket']} --user=#{schema} --password=#{schema} --execute='' #{schema}"
+     sensitive true
+   end
+ end
+diff --git a/deployment/chef/cookbooks/blueprint-solr/recipes/default.rb b/deployment/chef/cookbooks/blueprint-solr/recipes/default.rb
+index d522ee5..c0747ad 100644
+--- a/deployment/chef/cookbooks/blueprint-solr/recipes/default.rb
++++ b/deployment/chef/cookbooks/blueprint-solr/recipes/default.rb
+@@ -93,7 +93,8 @@ template '/etc/default/solr.in.sh' do
+     java_mem: node['blueprint']['solr']['java_mem'],
+     java_home: node['blueprint']['solr']['java_home']
+   )
+-  only_if { !platform_family?('debian') }
++  # Ubuntu: removed at our risk
++  # only_if { !platform_family?('debian') }
+   notifies :create, 'ruby_block[restart_solr_service]', :immediately
+ end
+ 
+diff --git a/deployment/chef/cookbooks/blueprint-yum/recipes/default.rb b/deployment/chef/cookbooks/blueprint-yum/recipes/default.rb
+index 28d1b97..78279e9 100644
+--- a/deployment/chef/cookbooks/blueprint-yum/recipes/default.rb
++++ b/deployment/chef/cookbooks/blueprint-yum/recipes/default.rb
+@@ -4,6 +4,10 @@ This recipe includes all necessary recipes to set up the yum repo configuration.
+ #>
+ =end
+ 
+-include_recipe 'yum::default'
+-include_recipe 'blueprint-yum::centos'
+-include_recipe 'blueprint-yum::remote'
++if platform?("debian", "ubuntu")
++  # Ubuntu: nothing equivalent here so far
++else
++  include_recipe 'yum::default'
++  include_recipe 'blueprint-yum::centos'
++  include_recipe 'blueprint-yum::remote'
++end
+diff --git a/deployment/chef/coremedia-cookbooks/coremedia-proxy/recipes/ssl.rb b/deployment/chef/coremedia-cookbooks/coremedia-proxy/recipes/ssl.rb
+index dfca6d4..0536628 100644
+--- a/deployment/chef/coremedia-cookbooks/coremedia-proxy/recipes/ssl.rb
++++ b/deployment/chef/coremedia-cookbooks/coremedia-proxy/recipes/ssl.rb
+@@ -9,9 +9,14 @@ include_recipe 'coremedia-proxy::default'
+ node.normal['apache']['mod_ssl']['cipher_suite'] = 'ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-AES256-GCM-SHA384:DHE-RSA-AES128-GCM-SHA256:DHE-DSS-AES128-GCM-SHA256:kEDH+AESGCM:ECDHE-RSA-AES128-SHA256:ECDHE-ECDSA-AES128-SHA256:ECDHE-RSA-AES128-SHA:ECDHE-ECDSA-AES128-SHA:ECDHE-RSA-AES256-SHA384:ECDHE-ECDSA-AES256-SHA384:ECDHE-RSA-AES256-SHA:ECDHE-ECDSA-AES256-SHA:DHE-RSA-AES128-SHA256:DHE-RSA-AES128-SHA:DHE-DSS-AES128-SHA256:DHE-RSA-AES256-SHA256:DHE-DSS-AES256-SHA:DHE-RSA-AES256-SHA:AES128-GCM-SHA256:AES256-GCM-SHA384:AES128-SHA256:AES256-SHA256:AES128-SHA:AES256-SHA:AES:CAMELLIA:DES-CBC3-SHA:!aNULL:!eNULL:!EXPORT:!DES:!RC4:!MD5:!PSK:!aECDH:!EDH-DSS-DES-CBC3-SHA:!EDH-RSA-DES-CBC3-SHA:!KRB5-DES-CBC3-SHA'
+ node.normal['apache']['mod_ssl']['honor_cipher_order'] = 'On'
+ node.normal['apache']['mod_ssl']['protocol'] = 'all -SSLv2 -SSLv3'
+-node.normal['apache']['mod_ssl']['directives']['SSLCertificateFile'] = '/etc/pki/tls/certs/localhost.crt'
+-#node.normal['apache']['mod_ssl']['directives']['SSLCertificateChainFile'] =
+-node.normal['apache']['mod_ssl']['directives']['SSLCertificateKeyFile'] = '/etc/pki/tls/private/localhost.key'
++if platform?("debian", "ubuntu")
++  node.normal['apache']['mod_ssl']['directives']['SSLCertificateFile'] = '/etc/ssl/certs/ssl-cert-snakeoil.pem'
++  node.normal['apache']['mod_ssl']['directives']['SSLCertificateKeyFile'] = '/etc/ssl/private/ssl-cert-snakeoil.key'
++else
++  node.normal['apache']['mod_ssl']['directives']['SSLCertificateFile'] = '/etc/pki/tls/certs/localhost.crt'
++  #node.normal['apache']['mod_ssl']['directives']['SSLCertificateChainFile'] =
++  node.normal['apache']['mod_ssl']['directives']['SSLCertificateKeyFile'] = '/etc/pki/tls/private/localhost.key'
++end
+ node.normal['apache']['mod_ssl']['directives']['Header'] = 'always add Strict-Transport-Security "max-age=15768000"'
+ 
+ include_recipe 'apache2::mod_ssl'
+diff --git a/deployment/chef/coremedia-cookbooks/coremedia_tomcat/definitions/lifecycle.rb b/deployment/chef/coremedia-cookbooks/coremedia_tomcat/definitions/lifecycle.rb
+index f3dfcd3..2fbd08a 100644
+--- a/deployment/chef/coremedia-cookbooks/coremedia_tomcat/definitions/lifecycle.rb
++++ b/deployment/chef/coremedia-cookbooks/coremedia_tomcat/definitions/lifecycle.rb
+@@ -94,6 +94,14 @@ define :coremedia_tomcat_service_lifecycle, :undeploy_unmanaged => true, :start_
+     end
+     only_if { params[:undeploy_unmanaged] }
+   end
++  if platform?("debian", "ubuntu")
++    # Ubuntu: make sure newly installed services are available
++    bash 'validate_systemctl' do
++      code <<-EOC
++        systemctl daemon-reload
++      EOC
++    end
++  end
+   actions = []
+   actions << :start if params[:start_service]
+   actions << :enable if params[:enable_service]
+diff --git a/deployment/chef/coremedia-cookbooks/coremedia_tomcat/templates/default/service.init.erb b/deployment/chef/coremedia-cookbooks/coremedia_tomcat/templates/default/service.init.erb
+index 547f873..cac8c44 100644
+--- a/deployment/chef/coremedia-cookbooks/coremedia_tomcat/templates/default/service.init.erb
++++ b/deployment/chef/coremedia-cookbooks/coremedia_tomcat/templates/default/service.init.erb
+@@ -7,6 +7,16 @@
+ # processname: <%= @name %>
+ # pidfile: <%= @service_dir%>/apache-tomcat.pid
+ 
++### BEGIN INIT INFO
++# Provides: <%= @name %>
++# Required-Start: $remote_fs $syslog $time
++# Required-Stop:  $remote_fs $syslog
++# Should-Start:   $network smtp
++# Should-Stop:    $network smtp
++# Default-Start: 5
++# Short-Description: <%= @description %>
++# Description: <%= @description %>
++### END INIT INFO
+ 
+ CATALINA_HOME=<%= @tomcat_dir%>
+ CATALINA_PID=<%= @service_dir%>/apache-tomcat.pid
+diff --git a/deployment/chef/nodes/cms-9-ubuntu.json b/deployment/chef/nodes/cms-9-ubuntu.json
+new file mode 100644
+index 0000000..92a9036
+--- /dev/null
++++ b/deployment/chef/nodes/cms-9-ubuntu.json
+@@ -0,0 +1,49 @@
++{
++  "blueprint": {
++    "hostname": "CMS_HOST",
++    "loopback_hostname": "localhost",
++    "maven_repository_url": "file://localhost/tmp/maven-repo",
++    "tomcat": {
++      "java_home": "/usr/lib/jvm/java-8-openjdk-amd64"
++    },
++    "tools": {
++      "java_home": "/usr/lib/jvm/java-8-openjdk-amd64"
++    },
++    "solr": {
++      "java_home": "/usr/lib/jvm/java-8-openjdk-amd64"
++    },
++    "webapps":{
++      "content-management-server": {
++        "application.properties": {
++          "cap.server.license": "properties/corem/license.zip"
++        }
++      },
++      "master-live-server": {
++        "application.properties": {
++          "cap.server.license": "properties/corem/license.zip"
++        }
++      }
++    },
++    "dev": {
++      "content": {
++        "content_zip": "file://localhost/tmp/content-users.zip"
++      }
++    }
++  },
++  "run_list": [
++    "role[mysql]",
++    "role[mongodb]",
++    "role[solr]",
++    "role[cms-9-config]",
++    "role[management]",
++    "role[publication]",
++    "role[preview]",
++    "role[preview-proxy]",
++    "role[studio]",
++    "role[studio-proxy]",
++    "role[delivery]",
++    "role[cms-9-delivery-proxy]",
++    "recipe[blueprint-cms-9::overview]",
++    "recipe[blueprint-dev-tooling::content]"
++  ]
++}
+diff --git a/deployment/chef/thirdparty-cookbooks/mongodb3/recipes/package_repo.rb b/deployment/chef/thirdparty-cookbooks/mongodb3/recipes/package_repo.rb
+index 6d774e0..c86a948 100644
+--- a/deployment/chef/thirdparty-cookbooks/mongodb3/recipes/package_repo.rb
++++ b/deployment/chef/thirdparty-cookbooks/mongodb3/recipes/package_repo.rb
+@@ -97,11 +97,15 @@ case node['platform_family']
+   when 'debian'
+     apt_repository "mongodb-org-#{pkg_major_version}" do
+       uri node['mongodb3']['package']['repo']['url']
++      # seems that mongodb supports only LTS versions of Ubuntu
+       if node['platform'] == 'ubuntu' and node['platform_version'].to_f == 15.04
+-        # seems that mongodb supports only LTS versions of Ubuntu
+         distribution "trusty/mongodb-org/#{node['mongodb3']['package']['repo']['apt']['name']}"
+       else
+-        distribution "#{node['lsb']['codename']}/mongodb-org/#{node['mongodb3']['package']['repo']['apt']['name']}"
++        if node['platform'] == 'ubuntu' and node['platform_version'].start_with?('17.')
++          distribution "xenial/mongodb-org/#{node['mongodb3']['package']['repo']['apt']['name']}"
++        else
++          distribution "#{node['lsb']['codename']}/mongodb-org/#{node['mongodb3']['package']['repo']['apt']['name']}"
++        end
+       end
+       components node['mongodb3']['package']['repo']['apt']['components']
+       keyserver node['mongodb3']['package']['repo']['apt']['keyserver']
+-- 
+2.7.4
+

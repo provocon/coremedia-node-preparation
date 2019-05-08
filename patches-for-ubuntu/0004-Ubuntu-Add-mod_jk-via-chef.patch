@@ -1,0 +1,26 @@
+From 299ab5529ab1e0a7f3429fe4f66c32f58950c2df Mon Sep 17 00:00:00 2001
+From: Martin Goellnitz <martin@goellnitz.de>
+Date: Mon, 4 Dec 2017 21:35:36 +0100
+Subject: [PATCH] Ubuntu: Add mod_jk via chef
+
+---
+ deployment/chef/coremedia-cookbooks/coremedia-proxy/recipes/default.rb | 3 +++
+ 1 file changed, 3 insertions(+)
+
+diff --git a/deployment/chef/coremedia-cookbooks/coremedia-proxy/recipes/default.rb b/deployment/chef/coremedia-cookbooks/coremedia-proxy/recipes/default.rb
+index 1f629fe..57a7bc5 100644
+--- a/deployment/chef/coremedia-cookbooks/coremedia-proxy/recipes/default.rb
++++ b/deployment/chef/coremedia-cookbooks/coremedia-proxy/recipes/default.rb
+@@ -7,6 +7,9 @@ This recipe installs Apache HTTPD and installs modules as well as configuring gl
+ include_recipe 'chef-sugar::default'
+ include_recipe 'apache2::default'
+ include_recipe 'apache2::mod_proxy'
++if platform?("debian", "ubuntu")
++  include_recipe 'apache2::mod_jk'
++end
+ include_recipe 'apache2::mod_status'
+ include_recipe 'apache2::mod_deflate'
+ include_recipe 'apache2::mod_expires'
+-- 
+2.7.4
+

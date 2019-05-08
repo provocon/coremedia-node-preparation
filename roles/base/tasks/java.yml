@@ -1,0 +1,30 @@
+# Copyright 2017-2019 Martin Goellnitz.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
+- name: Install Java on Debian/Ubuntu
+  apt: name=openjdk-8-jdk update_cache=yes
+  when: ansible_distribution == 'Debian' or ansible_distribution == 'Ubuntu'
+
+- name: Java path configuration for Debian/Ubuntu
+  template: src=java_deb.sh dest=/etc/profile.d/java.sh
+  when: ansible_distribution == 'Debian' or ansible_distribution == 'Ubuntu'
+
+- name: Install Java on CentOS/RedHat
+  yum: name=java-1.8.0-openjdk-devel update_cache=yes
+  when: ansible_distribution == 'CentOS' or ansible_distribution == 'Red Hat Enterprise Linux'
+
+- name: Java path configuration for CentOS/RedHat
+  template: src=java_rpm.sh dest=/etc/profile.d/java.sh
+  when: ansible_distribution == 'CentOS' or ansible_distribution == 'Red Hat Enterprise Linux'

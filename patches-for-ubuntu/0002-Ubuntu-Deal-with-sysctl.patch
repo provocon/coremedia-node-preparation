@@ -1,0 +1,28 @@
+From f4704cfffda66a9c2dc5a98df220835f655cbc25 Mon Sep 17 00:00:00 2001
+From: Martin Goellnitz <martin@goellnitz.de>
+Date: Fri, 24 Nov 2017 17:39:44 +0100
+Subject: [PATCH 2/2] Ubuntu: Deal with sysctl
+
+---
+ deployment/chef/cookbooks/blueprint-base/recipes/default.rb | 5 ++++-
+ 1 file changed, 4 insertions(+), 1 deletion(-)
+
+diff --git a/deployment/chef/cookbooks/blueprint-base/recipes/default.rb b/deployment/chef/cookbooks/blueprint-base/recipes/default.rb
+index 0b569c9..10bcd89 100644
+--- a/deployment/chef/cookbooks/blueprint-base/recipes/default.rb
++++ b/deployment/chef/cookbooks/blueprint-base/recipes/default.rb
+@@ -5,7 +5,10 @@ and tools.
+ #>
+ =end
+ 
+-include_recipe 'sysctl::apply'
++if !platform?("debian", "ubuntu")
++  include_recipe 'sysctl::apply'
++end
++
+ if node['java_se'] && node['java_se']['java_home']
+   node.default_unless['blueprint']['tools']['java_home'] = node['java_se']['java_home']
+   node.default_unless['blueprint']['tomcat']['java_home'] = node['java_se']['java_home']
+-- 
+2.7.4
+

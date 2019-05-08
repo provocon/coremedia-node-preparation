@@ -1,0 +1,42 @@
+From 93fd4f5f3b67c5b1c872151457f2443f8660fa6e Mon Sep 17 00:00:00 2001
+From: Martin Goellnitz <martin@goellnitz.de>
+Date: Fri, 1 Dec 2017 20:13:27 +0100
+Subject: [PATCH] Ubuntu: use studio via ajp on this system
+
+---
+ deployment/chef/cookbooks/blueprint-proxy/recipes/studio.rb | 1 +
+ deployment/chef/nodes/cms-9-ubuntu.json                     | 8 ++++++++
+ 2 files changed, 9 insertions(+)
+
+diff --git a/deployment/chef/cookbooks/blueprint-proxy/recipes/studio.rb b/deployment/chef/cookbooks/blueprint-proxy/recipes/studio.rb
+index 4b36834..e8c6658 100644
+--- a/deployment/chef/cookbooks/blueprint-proxy/recipes/studio.rb
++++ b/deployment/chef/cookbooks/blueprint-proxy/recipes/studio.rb
+@@ -12,4 +12,5 @@ coremedia_proxy_webapp 'studio' do
+   servlet_context node['blueprint']['proxy']['virtual_host']['studio']['context']
+   cluster('default' => { 'host' => node['blueprint']['proxy']['virtual_host']['studio']['host'], 'port' => node['blueprint']['proxy']['virtual_host']['studio']['port'] })
+   rewrite_log_level node['blueprint']['proxy']['virtual_host']['studio']['rewrite_log_level']
++  protocol node['blueprint']['proxy']['virtual_host']['studio']['protocol'] unless node['blueprint']['proxy']['virtual_host']['studio']['protocol'].nil?
+ end
+diff --git a/deployment/chef/nodes/cms-9-ubuntu.json b/deployment/chef/nodes/cms-9-ubuntu.json
+index 92a9036..fd3e363 100644
+--- a/deployment/chef/nodes/cms-9-ubuntu.json
++++ b/deployment/chef/nodes/cms-9-ubuntu.json
+@@ -12,6 +12,14 @@
+     "solr": {
+       "java_home": "/usr/lib/jvm/java-8-openjdk-amd64"
+     },
++    "proxy": {
++      "virtual_host": {
++        "studio": {
++          "protocol": "ajp",
++          "port": "41009"
++        }
++      }
++    },
+     "webapps":{
+       "content-management-server": {
+         "application.properties": {
+-- 
+2.7.4
+

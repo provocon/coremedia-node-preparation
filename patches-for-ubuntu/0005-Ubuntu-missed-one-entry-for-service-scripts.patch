@@ -1,0 +1,24 @@
+From 6f405ed698a58097ef6e7cb366a6c224f80451e6 Mon Sep 17 00:00:00 2001
+From: Martin Goellnitz <martin@goellnitz.de>
+Date: Fri, 15 Feb 2019 10:20:56 +0100
+Subject: [PATCH] Ubuntu: missed one entry for service scripts
+
+---
+ .../coremedia_tomcat/templates/default/service.init.erb                  | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/deployment/chef/coremedia-cookbooks/coremedia_tomcat/templates/default/service.init.erb b/deployment/chef/coremedia-cookbooks/coremedia_tomcat/templates/default/service.init.erb
+index cac8c44..767689e 100644
+--- a/deployment/chef/coremedia-cookbooks/coremedia_tomcat/templates/default/service.init.erb
++++ b/deployment/chef/coremedia-cookbooks/coremedia_tomcat/templates/default/service.init.erb
+@@ -14,6 +14,7 @@
+ # Should-Start:   $network smtp
+ # Should-Stop:    $network smtp
+ # Default-Start: 5
++# Default-Start: 3
+ # Short-Description: <%= @description %>
+ # Description: <%= @description %>
+ ### END INIT INFO
+-- 
+2.7.4
+

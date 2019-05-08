@@ -1,0 +1,35 @@
+#
+# Copyright 2017-2019 Martin Goellnitz.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
+- name: Extract SenchaCMD
+  unarchive:
+    src: "http://cdn.sencha.com/cmd/{{ senchacmd_version }}/no-jre/SenchaCmd-{{ senchacmd_version }}-linux-amd64.sh.zip"
+    dest: "{{senchacmd_home_parent_directory}}"
+    copy: no
+
+- name: SenchaCMD path configuration
+  template: src=senchacmd.sh dest=/etc/profile.d/senchacmd.sh
+
+- name: Install SenchaCMD
+  shell: "{{ senchacmd_home_parent_directory }}/SenchaCmd-{{ senchacmd_long_version }}-linux-amd64.sh -q -dir {{senchacmd_home_parent_directory}}/sencha/cmd"
+
+- name: Remove broken SenchaCMD from bashrc
+  shell: "grep -v export.PATH.*sencha.* ~/.bashrc > ~/.brc ; cat ~/.brc > ~/.bashrc ; rm -f ~/.brc"
+  when: ansible_distribution == 'Debian' or ansible_distribution == 'Ubuntu'
+
+- name: Create SenchaCMD repository
+  file: path={{ senchacmd_home_parent_directory }}/sencha/repo state=directory mode=0777
+ 

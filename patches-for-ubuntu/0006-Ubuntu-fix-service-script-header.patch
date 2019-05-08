@@ -1,0 +1,25 @@
+From 647c5c08ed4bcd7fff20fd3352717d81ba88049f Mon Sep 17 00:00:00 2001
+From: Martin Goellnitz <martin@goellnitz.de>
+Date: Fri, 3 May 2019 12:50:16 +0200
+Subject: [PATCH] Ubuntu: fix service script header
+
+---
+ .../coremedia_tomcat/templates/default/service.init.erb                 | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/deployment/chef/coremedia-cookbooks/coremedia_tomcat/templates/default/service.init.erb b/deployment/chef/coremedia-cookbooks/coremedia_tomcat/templates/default/service.init.erb
+index 767689e..0e092fd 100644
+--- a/deployment/chef/coremedia-cookbooks/coremedia_tomcat/templates/default/service.init.erb
++++ b/deployment/chef/coremedia-cookbooks/coremedia_tomcat/templates/default/service.init.erb
+@@ -14,7 +14,7 @@
+ # Should-Start:   $network smtp
+ # Should-Stop:    $network smtp
+ # Default-Start: 5
+-# Default-Start: 3
++# Default-Stop: 3
+ # Short-Description: <%= @description %>
+ # Description: <%= @description %>
+ ### END INIT INFO
+-- 
+2.7.4
+
