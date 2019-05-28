@@ -19,12 +19,27 @@
   apt: name=firewalld update_cache=yes
   when: ansible_distribution == 'Debian' or ansible_distribution == 'Ubuntu'
 
+- name: Enable FirewallD
+  service:
+    name: firewalld
+    enabled: yes
+    state: started
+
 - name: Prepare firewall
   shell: firewall-cmd --zone=public --add-port={{item}}/tcp --permanent
   with_items: 
     - 40080
     - 40180
     - 40183
+    - 40380
+    - 40383
+    - 27017
+    - 28017
     - 80
     - 443
     - 22
+
+- name: Enable FirewallD
+  service:
+    name: firewalld
+    state: restarted
