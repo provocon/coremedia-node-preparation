@@ -24,6 +24,11 @@ chef node configuration.
 The role `cmsdev` provides the needed development tools to build a workspace.
 
 
+## Special Handling for CentOS
+
+Be aware to set possible `selinux` setups to more `permissive`.
+
+
 ## Special Handling for Ubuntu
 
 Ubuntu is not on the list of supported platforms for CoreMedia. Since only
