@@ -40,3 +40,10 @@
    - mariadb-server
    - mariadb-common
    - mariadb-config
+
+# Needed for MySQL Deployment by CoreMedia Chef to work
+- name: Put SELinux in permissive mode on CentOS/RedHat
+  when: ansible_distribution == 'CentOS' or ansible_distribution == 'Red Hat Enterprise Linux'
+  selinux:
+    policy: targeted
+    state: permissive
