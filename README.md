@@ -1,11 +1,11 @@
-# Patches and Ansible Playbook to Prepare Hosts/VMs for CoreMedia
+# Playbook and Patches to Prepare Hosts/VMs for CoreMedia
 
 `coremedia-node-preparation`
 
-The playbook in this repository is intended for preparation of CI nodes and 
-other hosts, which need to be able to build [CoreMedia][coremedia] workspaces 
-for CoreMedia CMS 9 or LiveContext 3 without any other installation steps 
-necessary.
+The [Ansible][ansible] playbook in this repository is intended for preparation 
+of CI systems and other hosts, which need to be able let [CoreMedia][coremedia] 
+CMS-9 or LiveContext 3 run on the or build the workspaces for them without any 
+other installation steps necessary.
 
 The supported target operating systems are CentOS, Debian, RedHat, and Ubuntu.
 
@@ -47,7 +47,7 @@ platform release 1904.
 
 ### Additional Ansible Preparation
 
-Install python on your node since otherwise ansible will not start.
+Install python on your node since otherwise [Ansible][ansible] will not start.
 
 The recipes in here also need a pre-installed ohai.
 
@@ -58,8 +58,8 @@ apt-get install ohai
 
 ## Preparation
 
-Configure relevant hosts in `inventory.properties` or your global ansible hosts 
-file (if you haven't done so).
+Configure relevant hosts in `inventory.properties` or your global 
+[Ansible][ansible] hosts file (if you haven't done so).
 
 
 ## Usage
@@ -112,6 +112,7 @@ for feedback.
 
 [issues]: https://github.com/provocon/coremedia-ubuntu-development/issues
 [sencha]: https://www.sencha.com/products/extjs/cmd-download/
+[ansible]: https://www.ansible.com/
 [coremedia]: https://www.coremedia.com/
 [github]: https://github.com/provocon/coremedia-node-preparation
 [gitlab]: https://gitlab.com/provocon/coremedia-node-preparation
