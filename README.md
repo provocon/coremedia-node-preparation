@@ -110,7 +110,7 @@ deployment.
 Please use the [issues][issues] section of this repository at [github][github] 
 for feedback. 
 
-[issues]: https://github.com/provocon/coremedia-ubuntu-development/issues
+[issues]: https://github.com/provocon/coremedia-node-preparation/issues
 [sencha]: https://www.sencha.com/products/extjs/cmd-download/
 [ansible]: https://www.ansible.com/
 [coremedia]: https://www.coremedia.com/
