@@ -15,4 +15,4 @@
 #
 
 # defaults for chef
-chef_version: 12.8.1
+chef_version: 12.21.12
