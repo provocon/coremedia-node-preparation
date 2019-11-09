@@ -16,7 +16,7 @@
 
 # defaults for apache-maven
 maven_major: 3
-maven_version: 3.5.2
+maven_version: 3.6.2
 maven_home_parent_directory: /opt
 
 # defaults for PhantomJS
@@ -24,6 +24,6 @@ phantomjs_version: 2.1.1
 phantomjs_home_parent_directory: /opt
 
 # defaults for SenchaCMD
-senchacmd_version: 6.5.3.6
-senchacmd_long_version: 6.5.3.6
+senchacmd_version: 6.7.0.63
+senchacmd_long_version: 6.7.0.63
 senchacmd_home_parent_directory: /opt
